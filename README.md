@@ -16,32 +16,6 @@ The dataset consists of the following columns:
 6. **Substrate (Sub)**: Refers to the substrate on which the lichen grows, represented by abbreviations of trees, shrubs, stones, etc.
 7. **Amount**: The number of lichen observed.
 
-## Project Structure
-project-directory
-│
-├── data/ # Directory containing data files
-
-│ ├── data.xlsx # Excel file containing lichen data
-
-│ └── substrats.xlsx # Excel file containing substrate information
-│
-├── plots/ # Directory for saving generated plots
-
-│ ├── frequency_distribution.png
-
-│ ├── substrate_distribution.png
-
-│ ├── species_per_substrate.png
-
-│ └── top_substrates.png
-│
-├── scripts/ # Directory for Python scripts
-
-│ ├── plotting.py # Script for generating plots
-
-│ └── check_substrates.py # Script for checking substrate categories
-│
-└── README.md # Project documentation
 
 ## Plotting Code
 
