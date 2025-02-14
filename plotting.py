@@ -2,6 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from functools import lru_cache
+from typing import Dict, List, Tuple
 
 # Load the data from the Excel files
 data = pd.read_excel('data/data.xlsx')
@@ -19,6 +21,7 @@ print(len(unique_genus)) # 235 unique genus
 
 # The 6th column Sub refers to the substrate, so where the lichen grows on. 
 # They are all abbreviations of trees, shrubs, stones, etc.
+@lru_cache(maxsize=None)
 def get_substrate_category(sub_code):
     """
     Categorize substrate codes into main categories based on their characteristics
@@ -136,8 +139,8 @@ def categorize_substrate(sub_code):
     
     return main_category_map.get(category, 'Other')
 
-def get_display_name(latin_name):
-    """Get display name for substrate, using Latin name to ensure uniqueness"""
+def get_display_name(latin_name: str) -> str:
+    """Get English display name for Latin species name"""
     # Common mapping of Latin genera to English names
     english_names = {
         'Quercus robur': 'English Oak',
@@ -177,28 +180,39 @@ def get_display_name(latin_name):
     return latin_name
 
 def plot_frequency_distribution(data):
-    """Create frequency distribution plot showing both MTB/64 distribution and frequency classes
-    This function analyzes the geographical distribution of lichen species using two key pieces of data:
-
-    - KMHOK (MTB/64 Grid Squares):
-        These are geographical grid coordinates that divide the study area into squares
-        Each number (like 511225, 511311) represents a specific grid square on the map
-        MTB/64 is a standardized grid system used for mapping species distributions
-    SPECIES:
-        This column contains the names of lichen species found in each grid square
-"""
-    # Create figure with extra space for note
+    """Create frequency distribution plot showing MTB/64 distribution and classes.
+    It effectively counts the number of unique grid squares per species and visualizes
+    this distribution."""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 8))
     
-    # Group by species and count occurrences in different MTB/64 squares
-    # Shows how widespread each species is
-    # X-axis: Species (ranked from most to least widespread)
-    # Y-axis: Number of different grid squares where each species was found
-    # This tells us which species are found in many locations vs. few locations
+    # Count number of MTB/64 squares per species
     species_freq = data.groupby('SPECIES')['KMHOK'].nunique().reset_index()
     
-    species_freq = species_freq.sort_values('KMHOK', ascending=False)
+    # Create histogram of number of grid squares
+    # This shows how many species are found in X number of grid squares
+    hist_values, hist_bins, _ = ax1.hist(
+        species_freq['KMHOK'], 
+        bins=20,  # Adjust number of bins as needed
+        color='skyblue',
+        edgecolor='black'
+    )
     
+    # Add value labels on top of bars
+    for i in range(len(hist_values)):
+        ax1.text(
+            (hist_bins[i] + hist_bins[i+1])/2,  # Center of bar
+            hist_values[i],  # Height of bar
+            f'{int(hist_values[i])}',  # Number of species
+            ha='center',
+            va='bottom'
+        )
+    
+    # Make axes labels clearer
+    ax1.set_xlabel('Number of MTB/64 Grid Squares (Species Range)')
+    ax1.set_ylabel('Number of Species')
+    ax1.set_title('Distribution of Species by Geographic Range\n(How many species occur in X grid squares)')
+    
+    # Rest of the pie chart code remains the same
     # Create frequency classes based on MTB occurrences
     bins = [0, 1, 2, 4, 8, 16, float('inf')]
     labels = ['vr', 'r', 'mr', 'mf', 'f', 'vf']
@@ -207,17 +221,9 @@ def plot_frequency_distribution(data):
     # Calculate percentages for pie chart
     freq_dist = species_freq['freq_class'].value_counts()
     freq_percentages = freq_dist / len(species_freq) * 100
-    
-    # Sort the frequencies to match the legend order
     freq_percentages = freq_percentages.reindex(['vr', 'r', 'mr', 'mf', 'f', 'vf'])
     
-    # Bar plot showing distribution of species across MTB/64 squares
-    ax1.bar(range(len(species_freq)), species_freq['KMHOK'])
-    ax1.set_xlabel('Species (ranked by occurrence)')
-    ax1.set_ylabel('Number of MTB/64 Grid Squares')
-    ax1.set_title('Distribution of Species Across Grid Squares')
-    
-    # Pie chart with consistent colors
+    # Pie chart
     colors = ['lightgray', 'darkgray', 'gray', 'dimgray', 'black', 'darkslategray']
     wedges, texts, autotexts = ax2.pie(freq_percentages, 
                                       labels=[f'{l} {v:.1f}%' for l, v in zip(freq_percentages.index, freq_percentages)],
@@ -225,7 +231,7 @@ def plot_frequency_distribution(data):
                                       autopct='%1.1f%%')
     ax2.set_title('Frequency Class Distribution')
     
-    # Add legend with matching colors and clearer MTB/64 references
+    # Update legend
     legend_labels = [
         'very rare (vr): 1 MTB/64 grid square',
         'rare (r): 2-3 MTB/64 grid squares',
@@ -237,12 +243,19 @@ def plot_frequency_distribution(data):
     ax2.legend(wedges, legend_labels,
                loc='center left', bbox_to_anchor=(1, 0.5))
     
-    # Add explanatory note
-    note = ("Note: These plots show the geographical distribution of lichen species:\n"
-           "Left: Number of MTB/64 grid squares where each species was found, ranked from most to least widespread.\n"
-           "Right: Distribution of species across frequency classes based on their occurrence in MTB/64 grid squares.\n"
-           "This helps understand which species are widespread vs. geographically restricted.")
-    plt.figtext(0.1, 0.02, note, wrap=True, horizontalalignment='left', fontsize=8)
+    # Update note
+    note = ("**Note:** These plots show the geographical distribution of lichen species:\n\n"
+           "_Left:_ Histogram showing how many species (y-axis) are found in a given number of grid squares (x-axis).\n"
+           "_Right:_ Distribution of species across frequency classes based on their occurrence in MTB/64 grid squares.\n\n"
+           "This helps understand the rarity patterns of species in the dataset.")
+    
+    fig.text(0.05, 0.02, note, 
+             wrap=True,
+             horizontalalignment='left',
+             verticalalignment='bottom',
+             fontsize=10,
+             bbox=dict(facecolor='white', alpha=0.8),
+             transform=fig.transFigure)
     
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.2)
@@ -489,6 +502,160 @@ def plot_woody_plants_distribution(data, substrats):
     plot_bark_distribution(data, substrats)
     plot_wood_distribution(data, substrats)
 
+def plot_temporal_trends(data):
+    """Create plot showing relative occurrences of species over time
+    
+    This function analyzes temporal trends while accounting for sampling effort by:
+    1. Calculating total observations per year
+    2. Converting species counts to relative frequencies
+    3. Showing both absolute and relative trends
+    """
+    # Create figure with subplots
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12))
+    
+    # Get yearly totals and species counts
+    yearly_data = data.groupby([data['DATE'].dt.year]).agg({
+        'AMOUNT': 'sum',  # Total observations
+        'SPECIES': 'nunique'  # Unique species
+    }).reset_index()
+    
+    # Plot 1: Absolute numbers
+    ax1.plot(yearly_data['DATE'], yearly_data['AMOUNT'], 
+             marker='o', label='Total observations', color='blue')
+    ax1.set_ylabel('Number of observations', color='blue')
+    
+    # Add second y-axis for species counts
+    ax1_twin = ax1.twinx()
+    ax1_twin.plot(yearly_data['DATE'], yearly_data['SPECIES'],
+                  marker='s', label='Unique species', color='red')
+    ax1_twin.set_ylabel('Number of unique species', color='red')
+    
+    # Add legend
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax1_twin.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+    
+    ax1.set_title('Absolute Numbers: Observations and Species Richness')
+    
+    # Plot 2: Relative frequencies
+    # Calculate species relative frequencies
+    yearly_species = data.groupby([data['DATE'].dt.year, 'SPECIES'])['AMOUNT'].sum().reset_index()
+    pivot_species = yearly_species.pivot(index='DATE', columns='SPECIES', values='AMOUNT').fillna(0)
+    
+    # Convert to relative frequencies
+    relative_freq = pivot_species.div(pivot_species.sum(axis=1), axis=0)
+    
+    # Select top 10 most common species for visualization
+    top_species = pivot_species.sum().nlargest(10).index
+    
+    # Plot relative frequencies for top species
+    for species in top_species:
+        ax2.plot(relative_freq.index, relative_freq[species], 
+                 label=species, marker='o', alpha=0.7)
+    
+    ax2.set_xlabel('Year')
+    ax2.set_ylabel('Relative Frequency')
+    ax2.set_title('Relative Frequencies of Top 10 Species Over Time')
+    ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    
+    # Add explanatory note
+    note = ("Note: These plots show temporal trends in lichen observations:\n"
+           "Top: Absolute numbers of total observations and unique species per year\n"
+           "Bottom: Relative frequencies of the 10 most common species,\n"
+           "normalized by total yearly observations to account for sampling effort")
+    plt.figtext(0.1, 0.02, note, wrap=True, horizontalalignment='left', fontsize=8)
+    
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.15)
+    return fig
+
+def plot_trend_analysis(data):
+    """Create plot showing species with strongest positive and negative trends
+    
+    This function:
+    1. Calculates relative frequencies for each species per year
+    2. Fits a linear regression to identify trends
+    3. Shows top 5 increasing and top 5 decreasing species
+    """
+    # Calculate yearly relative frequencies
+    yearly_species = data.groupby([data['DATE'].dt.year, 'SPECIES'])['AMOUNT'].sum().reset_index()
+    yearly_totals = yearly_species.groupby('DATE')['AMOUNT'].sum()
+    yearly_species['relative_freq'] = yearly_species.apply(
+        lambda x: x['AMOUNT'] / yearly_totals[x['DATE']], axis=1
+    )
+    
+    # Pivot data for trend analysis
+    species_trends = yearly_species.pivot(
+        index='DATE', columns='SPECIES', values='relative_freq'
+    ).fillna(0)
+    
+    # Calculate trends using linear regression
+    trends = {}
+    for species in species_trends.columns:
+        x = np.arange(len(species_trends.index))
+        y = species_trends[species].values
+        slope, _ = np.polyfit(x, y, 1)
+        trends[species] = slope
+    
+    # Get top 5 increasing and decreasing species
+    trend_series = pd.Series(trends)
+    top_increasing = trend_series.nlargest(5)
+    top_decreasing = trend_series.nsmallest(5)
+    
+    # Create figure
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12))
+    
+    # Plot increasing trends
+    for species in top_increasing.index:
+        data = species_trends[species]
+        ax1.plot(species_trends.index, data, marker='o', label=f"{species} ({top_increasing[species]:.2e})")
+        
+        # Add trend line
+        x = np.arange(len(species_trends.index))
+        z = np.polyfit(x, data, 1)
+        p = np.poly1d(z)
+        ax1.plot(species_trends.index, p(x), '--', alpha=0.5)
+    
+    ax1.set_title('Top 5 Species with Strongest Increasing Trends')
+    ax1.set_ylabel('Relative Frequency')
+    ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    
+    # Plot decreasing trends
+    for species in top_decreasing.index:
+        data = species_trends[species]
+        ax2.plot(species_trends.index, data, marker='o', label=f"{species} ({top_decreasing[species]:.2e})")
+        
+        # Add trend line
+        x = np.arange(len(species_trends.index))
+        z = np.polyfit(x, data, 1)
+        p = np.poly1d(z)
+        ax2.plot(species_trends.index, p(x), '--', alpha=0.5)
+    
+    ax2.set_title('Top 5 Species with Strongest Decreasing Trends')
+    ax2.set_xlabel('Year')
+    ax2.set_ylabel('Relative Frequency')
+    ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    
+    # Add explanatory note with improved formatting
+    note = ("**Note:** These plots show species with the strongest trends over time:\n\n"
+           "_Top panel:_ Species with the strongest increasing relative frequency\n"
+           "_Bottom panel:_ Species with the strongest decreasing relative frequency\n\n"
+           "Numbers in parentheses show the slope of the trend line (change in relative frequency per year). "
+           "Dashed lines indicate the fitted linear trends.")
+    
+    # Use figure-width text box for note
+    fig.text(0.05, 0.02, note,
+             wrap=True,
+             horizontalalignment='left',
+             verticalalignment='bottom',
+             fontsize=10,
+             bbox=dict(facecolor='white', alpha=0.8),
+             transform=fig.transFigure)
+    
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.2)
+    return fig
+
 def main():
     """Main function to create all plots"""
     # Read data
@@ -521,6 +688,16 @@ def main():
     
     # Create and save woody plants distribution plot
     plot_woody_plants_distribution(data, substrats)
+    
+    # Create and save temporal trends plot
+    fig6 = plot_temporal_trends(data)
+    fig6.savefig('plots/temporal_trends.png', bbox_inches='tight')
+    plt.close(fig6)
+    
+    # Create and save trend analysis plot
+    fig7 = plot_trend_analysis(data)
+    fig7.savefig('plots/trend_analysis.png', bbox_inches='tight')
+    plt.close(fig7)
 
 if __name__ == '__main__':
     main()
