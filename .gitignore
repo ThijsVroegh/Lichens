@@ -1,0 +1,14 @@
+.qodo
+.cursor/
+.specstpry/
+
+ __pycache__/
+ backup/
+ data/
+ opdracht/
+ venv/
+ plots_old/
+
+ korstmos.code-workspace
+
+
