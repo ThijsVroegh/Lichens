@@ -9,6 +9,8 @@
  venv/
  plots_old/
 
+ original_images/
+
  korstmos.code-workspace
 
 
