@@ -1,2 +1,17 @@
 .qodo
-original_images/
+
+.cursor/
+.specstory/
+
+ __pycache__/
+ backup/
+ data/
+ opdracht/
+ venv/
+ plots_old/
+
+ original_images/
+
+ korstmos.code-workspace
+
+

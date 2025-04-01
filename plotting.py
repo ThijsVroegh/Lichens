@@ -183,7 +183,7 @@ def plot_frequency_distribution(data):
     """Create frequency distribution plot showing MTB/64 distribution and classes.
     It effectively counts the number of unique grid squares per species and visualizes
     this distribution."""
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 8))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
     
     # Count number of MTB/64 squares per species
     species_freq = data.groupby('SPECIES')['KMHOK'].nunique().reset_index()
@@ -193,7 +193,7 @@ def plot_frequency_distribution(data):
     hist_values, hist_bins, _ = ax1.hist(
         species_freq['KMHOK'], 
         bins=20,  # Adjust number of bins as needed
-        color='skyblue',
+        color='#1f77b4',
         edgecolor='black'
     )
     
@@ -210,7 +210,7 @@ def plot_frequency_distribution(data):
     # Make axes labels clearer
     ax1.set_xlabel('Number of MTB/64 Grid Squares (Species Range)')
     ax1.set_ylabel('Number of Species')
-    ax1.set_title('Distribution of Species by Geographic Range\n(How many species occur in X grid squares)')
+    ax1.set_title('Distribution of Species by Geographic Range\n(How many species occur in X grid squares)', fontsize=16, pad=20)
     
     # Rest of the pie chart code remains the same
     # Create frequency classes based on MTB occurrences
@@ -224,11 +224,12 @@ def plot_frequency_distribution(data):
     freq_percentages = freq_percentages.reindex(['vr', 'r', 'mr', 'mf', 'f', 'vf'])
     
     # Pie chart
-    colors = ['lightgray', 'darkgray', 'gray', 'dimgray', 'black', 'darkslategray']
-    wedges, texts, autotexts = ax2.pie(freq_percentages, 
+    colors = ['#abd9e9', '#fdae61', '#f46d43', '#d73027', '#a50026', '#313695']
+    wedges, texts, autotexts = ax2.pie(freq_percentages,
                                       labels=[f'{l} {v:.1f}%' for l, v in zip(freq_percentages.index, freq_percentages)],
                                       colors=colors,
-                                      autopct='%1.1f%%')
+                                      autopct='%1.1f%%',
+                                      textprops={'color': 'white', 'weight': 'bold'})
     ax2.set_title('Frequency Class Distribution')
     
     # Update legend
@@ -254,7 +255,7 @@ def plot_frequency_distribution(data):
              horizontalalignment='left',
              verticalalignment='bottom',
              fontsize=10,
-             bbox=dict(facecolor='white', alpha=0.8),
+             bbox=dict(facecolor='#f5f5f5', alpha=0.5, boxstyle='round,pad=0.5'),
              transform=fig.transFigure)
     
     plt.tight_layout()
@@ -271,7 +272,7 @@ def plot_substrate_distribution(data):
     substrate_counts = data.groupby('SubstrateCategory')['AMOUNT'].sum().sort_values(ascending=False)
     
     # Create figure
-    plt.figure(figsize=(15, 8))
+    plt.figure(figsize=(12, 8))
     
     # Create vertical bar plot
     ax = plt.gca()
@@ -281,7 +282,7 @@ def plot_substrate_distribution(data):
     ax.set_xticks(range(len(substrate_counts)))
     ax.set_xticklabels(substrate_counts.index, rotation=0)
     ax.set_ylabel('Number of Observations')
-    ax.set_title('Distribution of Lichen Observations Across Substrate Types')
+    ax.set_title('Distribution of Lichen Observations Across Substrate Types', fontsize=16)
     
     # Add value labels on top of each bar
     for i, v in enumerate(substrate_counts.values):
@@ -347,7 +348,7 @@ def plot_species_per_substrate(data):
     
     # Add legend with substrate categories and their contents
     legend_text = {
-        'Bark': 'Tree species: Aa, Ab, Ac, Acm, Acn, Ae, Ah, Ai, Al, Ali, Aln, Am, Ame, An, Ap, Api, Apl, Aps, Ar, Ara, Arb, Arc, Ars, Ass, Au, Az, Aza, Bau, Be, Br, Bu, Bul, Bur, Ca, Cas, Cat, Cc, Cd, Cea, Cee, Cf, Cg, Ch, Cho, Chr, Ci, Cis, Cl, Cla, Cm, Co, Coc, Col, Cou, Cp, Cr, Cre, Cry, Cs, Csi, Ct, Cu, Cul, Cum, Cyt, Da, Do, Dr, En, Ep, Er, Erm, Ery, Eu, Euo, Fa, Fi, Fn, Fo, For, Fr, Fua, Ga, Geo, Gi, Gr, Gu, Hb, Hi, Hp, Hu, Hur, Hy, Id, In, Ix, Ja, Jac, Jn, Ju, La, Lal, Lau, Li, Lib, Lic, Lno, Lr, Ly, Man, May, Me, Mel, Met, Mg, Mh, Mi, Mic, Ml, Mn, Mol, Mr, Ms, Mt, My, Na, Ner, No, Oc, Ol, Or, Os, Pa, Pac, Pah, Pal, Par, Pau, Pc, Pca, Pdu, Pe, Ph, Phy, Pi, Pic, Pit, Pl, Pla, Pln, Pn, Po, Pod, Pol, Pp, Pr, Prd, Prt, Ps, Psp, Pt, Pth, Ptr, Pu, Py, Qco, Qf, Qil, Qpa, Qpu, Qpy, Qro, Qru, Qs, Qu, Qut, Rd, Rh, Ri, Rm, Ro, Rs, Ru, Rz, Rzm, Sa, Sal, Sd, Sek, Sm, Sn, Sp, Sq, Sr, Sy, Sz, Te, Tel, Ti, Tm, Tn, Tr, Ts, Tx, Ul, Va, Vi, We, Wi, Yu, Yue, ac, be, con, ft, pc, qro, sa, sm',
+        'Bark': 'Tree species: Aa, Ab, Ac, Acm, Acn, Ae, Ah, Ai, Al, Ali, Aln, Am, Ame, An, Ap, Api, Apl, Aps, Ar, Ara, Arb, Arc, Ars, Ass, Au, Az, Aza, Bau, Be, Br, Bu, Bul, Bur, Ca, Cas, Cat, Cc, Cd, Cea, Cee, Cf, Cg, Ch, Cho, Chr, Ci, Cis, Cl, Cla, Cm, Co, Coc, Col, Cou, Cp, Cr, Cre, Cry, Cs, Csi, Ct, Cu, Cul, Cum, Cyt, Da, Do, Dr, En, Ep, Er, Erm, Ery, Eu, Euo, Fa, Fi, Fn, Fo, For, Fr, Fua, Ga, Geo, Gi, Gr, Gu, Hb, Hi, Hp, Hu, Hur, Hy, Id, In, Ix, Ja, Jac, Jn, Ju, La, Lal, Lau, Li, Lib, Lic, Lno, Lr, Ly, Man, May, Me, Mel, Met, Mg, Mh, Mi, Mic, Ml, Mn, Mo, Mol, Mr, Ms, Mt, My, Na, Ner, No, Oc, Ol, Or, Os, Pa, Pac, Pah, Pal, Par, Pau, Pc, Pca, Pdu, Pe, Ph, Phy, Pi, Pic, Pit, Pl, Pla, Pln, Pn, Po, Pod, Pol, Pp, Pr, Prd, Prt, Ps, Psp, Pt, Pth, Ptr, Pu, Py, Qco, Qf, Qil, Qpa, Qpu, Qpy, Qro, Qru, Qs, Qu, Qut, Rd, Rh, Ri, Rm, Ro, Rs, Ru, Rz, Rzm, Sa, Sal, Sd, Sek, Sm, Sn, Sp, Sq, Sr, Sy, Sz, Te, Tel, Ti, Tm, Tn, Tr, Ts, Tx, Ul, Va, Vi, We, Wi, Yu, Yue, ac, be, con, ft, pc, qro, sa, sm',
         'Stone': 'Rock and stone substrates: Ba, C, Cn, So, asp, b, ba, c, cli, cn, cw, ir, mor, pav, rt, s, san, sh, so, sti, sw, ti, tsa, tsb, tsc, tss, vr',
         'Wood': 'Dead wood and processed wood: Gn, Th, bfb, bfp, bft, dbs, dst, exr, fp, fq, fs, pwf, st, stb, stc, stp, stq, tf, th, w, wb, wf, wfb, wft, wp, wst',
         'Soil': 'Ground and soil substrates: dg, eb, sdh, sts, t',
@@ -397,7 +398,7 @@ def plot_top_substrates(data):
     y_pos = range(len(top_substrates))
     
     # Plot bars for observations
-    obs_bars = ax.barh(y_pos, top_substrates['AMOUNT'], color='skyblue', label='Number of Observations')
+    obs_bars = ax.barh(y_pos, top_substrates['AMOUNT'], color='#1f77b4', label='Number of Observations')
     
     # Add species count as text
     for i, (obs, species) in enumerate(zip(top_substrates['AMOUNT'], top_substrates['SPECIES'])):
@@ -521,14 +522,14 @@ def plot_temporal_trends(data):
     
     # Plot 1: Absolute numbers
     ax1.plot(yearly_data['DATE'], yearly_data['AMOUNT'], 
-             marker='o', label='Total observations', color='blue')
-    ax1.set_ylabel('Number of observations', color='blue')
+             marker='o', label='Total observations', color='#abd9e9')  # Light blue
+    ax1.set_ylabel('Number of observations', color='#abd9e9')
     
     # Add second y-axis for species counts
     ax1_twin = ax1.twinx()
     ax1_twin.plot(yearly_data['DATE'], yearly_data['SPECIES'],
-                  marker='s', label='Unique species', color='red')
-    ax1_twin.set_ylabel('Number of unique species', color='red')
+                  marker='s', label='Unique species', color='#fdae61')  # Orange
+    ax1_twin.set_ylabel('Number of unique species', color='#fdae61')
     
     # Add legend
     lines1, labels1 = ax1.get_legend_handles_labels()
@@ -548,10 +549,29 @@ def plot_temporal_trends(data):
     # Select top 10 most common species for visualization
     top_species = pivot_species.sum().nlargest(10).index
     
+    # Define colors from the palette (6 colors provided)
+    colors = [
+        '#abd9e9',  # Light blue
+        '#fdae61',  # Orange
+        '#f46d43',  # Dark orange
+        '#d73027',  # Red
+        '#a50026',  # Dark red
+        '#313695'   # Dark blue
+    ]
+    
+    # Add 4 more harmonious colors for potential 10 species
+    extended_colors = colors + [
+        '#4575b4',  # Medium blue - complements the palette
+        '#74add1',  # Medium-light blue
+        '#fee090',  # Light orange/yellow - matches with original palette
+        '#999999'   # Gray - neutral option that works with the palette
+    ]
+    
     # Plot relative frequencies for top species
-    for species in top_species:
+    for i, species in enumerate(top_species):
         ax2.plot(relative_freq.index, relative_freq[species], 
-                 label=species, marker='o', alpha=0.7)
+                 label=species, marker='o', alpha=0.7,
+                 color=extended_colors[i % len(extended_colors)])  # Cycle through colors
     
     ax2.set_xlabel('Year')
     ax2.set_ylabel('Relative Frequency')
@@ -605,31 +625,48 @@ def plot_trend_analysis(data):
     # Create figure
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12))
     
+    # Define colors from the palette (6 colors provided)
+    colors = [
+        '#abd9e9',  # Light blue
+        '#fee090',  # Light orange/yellow - matches with original palette
+        '#fdae61',  # Orange        
+        '#d73027',  # Red        
+        '#313695',  # Dark blue
+        '#999999'   # Gray - neutral option that works with the palette
+    ]   
+    
+    
     # Plot increasing trends
-    for species in top_increasing.index:
+    for i, species in enumerate(top_increasing.index):
         data = species_trends[species]
-        ax1.plot(species_trends.index, data, marker='o', label=f"{species} ({top_increasing[species]:.2e})")
+        color_idx = i % len(colors)
+        ax1.plot(species_trends.index, data, marker='o', 
+                 label=f"{species} ({top_increasing[species]:.2e})",
+                 color=colors[color_idx])
         
         # Add trend line
         x = np.arange(len(species_trends.index))
         z = np.polyfit(x, data, 1)
         p = np.poly1d(z)
-        ax1.plot(species_trends.index, p(x), '--', alpha=0.5)
+        ax1.plot(species_trends.index, p(x), '--', alpha=0.5, color=colors[color_idx])
     
     ax1.set_title('Top 5 Species with Strongest Increasing Trends')
     ax1.set_ylabel('Relative Frequency')
     ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     
     # Plot decreasing trends
-    for species in top_decreasing.index:
+    for i, species in enumerate(top_decreasing.index):
         data = species_trends[species]
-        ax2.plot(species_trends.index, data, marker='o', label=f"{species} ({top_decreasing[species]:.2e})")
+        color_idx = i % len(colors)
+        ax2.plot(species_trends.index, data, marker='o', 
+                 label=f"{species} ({top_decreasing[species]:.2e})",
+                 color=colors[color_idx])
         
         # Add trend line
         x = np.arange(len(species_trends.index))
         z = np.polyfit(x, data, 1)
         p = np.poly1d(z)
-        ax2.plot(species_trends.index, p(x), '--', alpha=0.5)
+        ax2.plot(species_trends.index, p(x), '--', alpha=0.5, color=colors[color_idx])
     
     ax2.set_title('Top 5 Species with Strongest Decreasing Trends')
     ax2.set_xlabel('Year')
