@@ -11,6 +11,14 @@ import time
 import pickle
 from geopy.geocoders import Nominatim
 from geopy.extra.rate_limiter import RateLimiter
+from functools import lru_cache
+
+# Import from plotting.py for better substrate categorization
+try:
+    from plotting import get_substrate_category as get_substrate_category_from_plotting
+except Exception as e:
+    st.warning(f"Could not import get_substrate_category from plotting.py: {str(e)}")
+    get_substrate_category_from_plotting = None
 
 # Set page title and layout
 st.set_page_config(
@@ -40,6 +48,9 @@ SUBSTRATE_COLORS = {
     'Other': '#7f7f7f',    # Gray
     'Unknown': '#d9d9d9'   # Light gray
 }
+
+# Map marker color - use orange for better visibility
+MAP_MARKER_COLOR = '#fd8d3c'  # Orange color for map markers
 
 # File to save geocoded coordinates
 GEOCODE_CACHE_FILE = "data/geocode_cache.pkl"
@@ -256,46 +267,108 @@ def add_kmhok_coordinates(data):
 
 def get_substrate_category(sub_code, substrats):
     """Get the substrate category for a given code"""
-    # This is a simplified version - ideally you would use the more comprehensive
-    # categorization from plotting.py
+    # Use the comprehensive version from plotting.py if available
+    if get_substrate_category_from_plotting is not None:
+        return get_substrate_category_from_plotting(sub_code)
     
+    # Fallback to our comprehensive version if plotting.py import failed
     if pd.isna(sub_code):
         return 'Unknown'
     
-    # Basic categories - this could be expanded with the full logic from plotting.py
-    bark_prefixes = ['aa', 'ab', 'ac', 'al', 'be', 'bu', 'fa', 'fr', 'po', 'qu', 'sa', 'ul']
-    stone_prefixes = ['s', 'c', 'b']
-    wood_prefixes = ['w', 'st']
-    soil_prefixes = ['t', 'eb']
-    moss_prefixes = ['m', 'mb', 'mc']
-    leaf_prefixes = ['le', 'leb', 'lel', 'ne']
+    # Comprehensive substrate categorization (copied from plotting.py)
+    # Stone substrates (including tiles and stone-related)
+    stone_substrates = [
+        'c', 's', 'b', 'sh', 'san', 'vr', 'ba', 'sw', 'cw', 'cn', 
+        'tsc', 'tsa', 'tsb', 'tss', 'sti', 'asp', 'mor', 'pav', 'cli', 
+        'rt', 'so', 'ir', 'tl'
+    ]
     
-    sub_code = str(sub_code).lower()
+    # Wood substrates (including processed wood, dead wood, and tree-related)
+    wood_substrates = [
+        'st', 'wp', 'wft', 'wfb', 'w', 'wb', 'wf', 'dst', 'wst',
+        'stb', 'stp', 'stq', 'stc',  # Specific stumps
+        'bft', 'bfb', 'exr',  # Exposed roots and bark
+        'pwf', 'th',  # Processed wood (painted wood, thatch)
+        'fq', 'fs', 'fp',  # Fallen specific trees
+        'bfp', 'tf', 'dbs',  # Bark fence post, tree-fern, dead branch shrub
+        'gn', 'Gn'  # Ganoderma (wood-decaying fungus)
+    ]
     
-    for prefix in bark_prefixes:
-        if sub_code.startswith(prefix):
+    # Soil/Earth substrates (including ground cover)
+    soil_substrates = [
+        't', 'eb', 'dg',  # Added dead grass
+        'sdh',  # Small dead herbs
+        'sts'  # Stone on soil
+    ]
+    
+    # Moss substrates
+    moss_substrates = ['m', 'mb', 'mc', 'ma', 'mo', 'Ma', 'Mo']
+    
+    # Leaf substrates (including needles and cones)
+    leaf_substrates = [
+        'le', 'leb', 'lel', 'ler', 'lea', 'lei', 'len', 'leo', 'leq', 
+        'les', 'let', 'leu', 'lef', 'lej', 'lep', 'lem', 'lec', 'lei',
+        'ne', 'nep', 'nea', 'nes', 'net', 'nec',  # Needles
+        'ce',  # Cone
+        'leh', 'leR'  # Leaf Chamaecyparis and other leaf types
+    ]
+    
+    # Other specific substrates (including non-woody plants and artificial)
+    other_substrates = [
+        'pls', 'as', 'rf', 'ust', 'ush', 'ud', 'uft', 'uc', 'ut',
+        'cac', 'lia', 'lv', 'he', 'He', 'Lv', 'po\\', 'pn*', 'qr', 'qre', 'fbf' 
+    ]
+    
+    # Tree/shrub genera that should be categorized as Bark
+    bark_substrates = [
+        'aa', 'ab', 'ac', 'acm', 'acn', 'ae', 'ah', 'ai', 'al', 'ali', 'aln', 'am', 
+        'ame', 'an', 'ap', 'api', 'apl', 'aps', 'ar', 'ara', 'arb', 'arc', 'ars', 
+        'ass', 'au', 'az', 'aza', 'bau', 'be', 'br', 'bu', 'bul', 'bur', 'ca', 
+        'cas', 'cat', 'cc', 'cd', 'cea', 'cec', 'cf', 'cg', 'ch', 'cho', 'chr', 
+        'ci', 'cis', 'cl', 'cla', 'cm', 'cn', 'co', 'coc', 'col', 'con', 'cou', 'cp', 
+        'cr', 'cre', 'cry', 'cs', 'csi', 'ct', 'cu', 'cul', 'cum', 'cyt', 'da', 
+        'do', 'dr', 'en', 'ep', 'er', 'erm', 'ery', 'eu', 'euo', 'fa', 'fi', 'fn', 
+        'fo', 'for', 'fr', 'ft', 'fua', 'ga', 'geo', 'gi', 'gr', 'gu', 'hb', 
+        'hi', 'hp', 'hu', 'hur', 'hy', 'id', 'in', 'ix', 'ja', 'jac', 'jn', 
+        'ju', 'la', 'lai', 'lau', 'li', 'lib', 'lic', 'lno', 'lr', 'ly', 'man', 
+        'may', 'me', 'mel', 'met', 'mg', 'mh', 'mi', 'mic', 'ml', 'mn', 
+        'mol', 'mr', 'ms', 'mt', 'my', 'na', 'ner', 'no', 'oc', 'ol', 'or', 
+        'os', 'pa', 'pac', 'pah', 'pal', 'par', 'pau', 'pc', 'pca', 'pdu', 'pe', 
+        'ph', 'phy', 'pi', 'pic', 'pit', 'pl', 'pla', 'pm', 'pn', 'po', 'pod', 
+        'pol', 'pp', 'pr', 'prd', 'prt', 'ps', 'psp', 'pt', 'pth', 'ptr', 'pu', 
+        'py', 'qco', 'qf', 'qil', 'qpa', 'qpu', 'qpy', 'qro', 'qru', 'qs', 'qu', 
+        'qut', 'rd', 'rh', 'ri', 'rm', 'ro', 'rs', 'ru', 'rz', 'rzm', 'sa', 'sal', 
+        'sd', 'sek', 'sm', 'sn', 'sp', 'sq', 'sr', 'sy', 'sz', 'te', 'tel', 'th',
+        'ti', 'tm', 'tn', 'tr', 'ts', 'tx', 'ul', 'va', 'vi', 'we', 'wi', 'yu', 'yue',
+        'Ba', 'Cn', 'So', 'Th', 'Qu', 'Qro', 'Sa', 'Po', 'Pn', 'Be', 'Bu', 'Tx',
+        'Sz', 'Beq', 'Euo', 'Chr'
+    ]
+    
+    # Convert input to lowercase for comparison
+    sub_code_lower = str(sub_code).lower()
+    
+    # Check for exact matches in substrate lists
+    if sub_code_lower in [x.lower() for x in stone_substrates]:
+        return 'Stone'
+    elif sub_code_lower in [x.lower() for x in wood_substrates]:
+        return 'Wood'
+    elif sub_code_lower in [x.lower() for x in soil_substrates]:
+        return 'Soil'
+    elif sub_code_lower in [x.lower() for x in moss_substrates]:
+        return 'Moss'
+    elif sub_code_lower in [x.lower() for x in leaf_substrates]:
+        return 'Leaf'
+    elif sub_code_lower in [x.lower() for x in other_substrates]:
+        return 'Other'
+    elif sub_code_lower in [x.lower() for x in bark_substrates]:
+        return 'Bark'
+    
+    # If no exact match, check for prefix matches for bark
+    for prefix in bark_substrates:
+        if sub_code_lower.startswith(prefix.lower()):
             return 'Bark'
     
-    for prefix in stone_prefixes:
-        if sub_code.startswith(prefix):
-            return 'Stone'
-            
-    for prefix in wood_prefixes:
-        if sub_code.startswith(prefix):
-            return 'Wood'
-            
-    for prefix in soil_prefixes:
-        if sub_code.startswith(prefix):
-            return 'Soil'
-            
-    for prefix in moss_prefixes:
-        if sub_code.startswith(prefix):
-            return 'Moss'
-            
-    for prefix in leaf_prefixes:
-        if sub_code.startswith(prefix):
-            return 'Leaf'
-    
+    # If not found in any list, mark as Other
     return 'Other'
 
 def create_map(data, genus_filter, species_filter, substrate_filter, category_filter, date_range):
@@ -333,8 +406,10 @@ def create_map(data, genus_filter, species_filter, substrate_filter, category_fi
             
             if st.session_state.color_by == "Substrate":
                 color = SUBSTRATE_COLORS.get(substrate_category, 'gray')
-            else:  # Color by threat category
+            elif st.session_state.color_by == "Threat Category":
                 color = CATEGORY_COLORS.get(row['CategoryName'], 'gray')
+            else:  # Locations - use the orange marker color
+                color = MAP_MARKER_COLOR
             
             # Create popup text
             popup_text = f"""
@@ -360,9 +435,12 @@ def create_map(data, genus_filter, species_filter, substrate_filter, category_fi
     if st.session_state.color_by == "Substrate":
         legend_items = SUBSTRATE_COLORS.items()
         legend_title = "Substrate Types"
-    else:
+    elif st.session_state.color_by == "Threat Category":
         legend_items = CATEGORY_COLORS.items()
         legend_title = "Threat Categories"
+    else:
+        legend_items = [("Lichen Locations", MAP_MARKER_COLOR)]
+        legend_title = "Map Legend"
     
     legend_html = f'''
     <div style="position: fixed; bottom: 50px; left: 50px; z-index: 1000; background-color: white; 
@@ -382,7 +460,7 @@ def create_map(data, genus_filter, species_filter, substrate_filter, category_fi
     return m, filtered_data
 
 def create_time_series_plot(filtered_data):
-    """Create time series visualization of lichen observations"""
+    """Create time series visualization of lichen observations with dual y-axes for different scales"""
     if filtered_data.empty:
         st.warning("No data available for the selected filters.")
         return None
@@ -394,25 +472,42 @@ def create_time_series_plot(filtered_data):
         'GENUS': 'nunique'
     }).reset_index()
     
-    # Create plot using Plotly for interactivity
-    fig = px.line(yearly_data, x='DATE', y=['AMOUNT', 'SPECIES', 'GENUS'],
-                 labels={'DATE': 'Year', 'value': 'Count', 'variable': 'Metric'},
-                 title='Lichen Observations Over Time',
-                 color_discrete_sequence=['#1f77b4', '#ff7f0e', '#2ca02c'])
+    # Create figure with two y-axes
+    fig = plt.figure(figsize=(12, 6))
     
-    fig.update_layout(
-        xaxis_title='Year',
-        yaxis_title='Count',
-        legend_title='Metric',
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        )
-    )
+    # Primary y-axis for species and genus counts
+    ax1 = fig.add_subplot(111)
+    ax1.set_xlabel('Year')
+    ax1.set_ylabel('Species/Genus Count', color='#ff7f0e')
+    ax1.tick_params(axis='y', labelcolor='#ff7f0e')
     
+    # Plot species and genus on primary y-axis
+    ax1.plot(yearly_data['DATE'], yearly_data['SPECIES'], '-o', color='#ff7f0e', label='Species')
+    ax1.plot(yearly_data['DATE'], yearly_data['GENUS'], '-o', color='#2ca02c', label='Genus')
+    
+    # Secondary y-axis for amount
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Number of Observations', color='#1f77b4')
+    ax2.tick_params(axis='y', labelcolor='#1f77b4')
+    
+    # Plot amount on secondary y-axis
+    ax2.plot(yearly_data['DATE'], yearly_data['AMOUNT'], '-o', color='#1f77b4', label='Observations')
+    
+    # Add grid lines for better readability
+    ax1.grid(True, linestyle='--', alpha=0.7)
+    
+    # Combine legends from both axes
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper center', bbox_to_anchor=(0.5, 1.15), 
+               ncol=3, frameon=True, facecolor='white', edgecolor='gray')
+    
+    # Add title
+    plt.title('Lichen Observations Over Time')
+    
+    plt.tight_layout()
+    
+    # Return matplotlib figure
     return fig
 
 def create_category_distribution(filtered_data):
@@ -525,11 +620,11 @@ def main():
         max_value=max_date
     )
     
-    # Option to color points by substrate or threat category
+    # Option to color points by substrate, threat category, or just use orange
     st.sidebar.header("Map Options")
     color_by = st.sidebar.radio(
         "Color points by:",
-        ["Threat Category", "Substrate"],
+        ["Threat Category", "Substrate", "Locations"],
         index=0
     )
     st.session_state.color_by = color_by
@@ -556,7 +651,7 @@ def main():
         st.subheader("Temporal Distribution")
         time_fig = create_time_series_plot(filtered_data)
         if time_fig:
-            st.plotly_chart(time_fig, use_container_width=True)
+            st.pyplot(time_fig)
         
         # Tab for additional charts
         tab1, tab2 = st.tabs(["Conservation Status", "Substrate Distribution"])
@@ -611,7 +706,12 @@ def main():
     
     The data includes information on location, species, genus, substrate, conservation status, and observation date.
     
-    **Note:** Location coordinates are approximated based on the KMHOK grid references.
+    **Note:** Location coordinates are derived from location names through geocoding, with KMHOK grid references used as a fallback.
+    
+    **Features:**
+    - Use orange location markers for better visibility
+    - Separate y-axes for observations and species/genus counts in the temporal chart
+    - Comprehensive substrate categorization based on the full project's taxonomy
     """)
 
 if __name__ == "__main__":
