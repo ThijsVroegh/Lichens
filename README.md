@@ -43,11 +43,11 @@ Additionally, the `red_list_analysis.py` script generates specialized visualizat
 
 Here are some example plots generated from the analysis:
 
-![Frequency Distribution](plots/frequency_distribution.png)
+![Frequency Distribution](plots/frequency_distribution.jpg)
 
-![Substrate Distribution](plots/substrate_distribution.png)
+![Substrate Distribution](plots/substrate_distribution.jpg)
 
-![Red List Distribution](plots/red_list_distribution.png)
+![Red List Distribution](plots/red_list_distribution.jpg)
 
 ## Red List Analysis
 
