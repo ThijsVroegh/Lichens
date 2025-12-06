@@ -345,13 +345,17 @@ def plot_red_list_distribution_horizontal(result_df):
             i,
             f"{int(bar.get_width())} ({plot_df['Percentage'].iloc[i]}%)",
             va='center',
-            fontsize=10
+            fontsize=20  # 2x larger (was 10)
         )
 
     # Add titles and labels
-    plt.title('Distribution of Species by Conservation Status', fontsize=16, pad=20)
-    plt.xlabel('Number of Species', fontsize=12)
-    plt.ylabel('Conservation Status', fontsize=12)
+    plt.title('Distribution of Species by Conservation Status', fontsize=32, pad=20)  # 2x larger (was 16)
+    plt.xlabel('Number of Species', fontsize=24)  # 2x larger (was 12)
+    plt.ylabel('Conservation Status', fontsize=24)  # 2x larger (was 12)
+    
+    # Make tick labels larger
+    plt.xticks(fontsize=20)  # 2x larger than default
+    plt.yticks(fontsize=20)  # 2x larger than default
 
     # Adjust layout
     plt.tight_layout()

@@ -260,7 +260,12 @@ def plot_frequency_distribution(data):
     """Create frequency distribution plot showing MTB/64 distribution and classes.
     It effectively counts the number of unique grid squares per species and visualizes
     this distribution."""
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 8))
+    fig = plt.figure(figsize=(15, 8))
+    
+    # Adjust subplot positions to allow overlap
+    # [left, bottom, width, height]
+    ax1 = fig.add_axes([0.05, 0.1, 0.45, 0.8])  # Left plot (histogram)
+    ax2 = fig.add_axes([0.35, 0.1, 0.35, 0.8])  # Right plot (pie chart) - shifted left to overlap
 
     # Count number of MTB/64 squares per species
     species_freq = data.groupby('SPECIES')['KMHOK'].nunique().reset_index()
@@ -281,13 +286,15 @@ def plot_frequency_distribution(data):
             hist_values[i],  # Height of bar
             f'{int(hist_values[i])}',  # Number of species
             ha='center',
-            va='bottom'
+            va='bottom',
+            fontsize=14
         )
 
     # Make axes labels clearer
-    ax1.set_xlabel('Number of MTB/64 Grid Squares (Species Range)')
-    ax1.set_ylabel('Number of Species')
-    ax1.set_title('Distribution of Species by Geographic Range\n(How many species occur in X grid squares)')
+    ax1.set_xlabel('Number of MTB/64 Grid Squares (Species Range)', fontsize=16)
+    ax1.set_ylabel('Number of Species', fontsize=16)
+    ax1.set_title('Distribution of Species by Geographic Range\n(How many species occur in X grid squares)', fontsize=18)
+    ax1.tick_params(axis='both', labelsize=14)
 
     # Rest of the pie chart code remains the same
     # Create frequency classes based on MTB occurrences
@@ -300,15 +307,20 @@ def plot_frequency_distribution(data):
     freq_percentages = freq_dist / len(species_freq) * 100
     freq_percentages = freq_percentages.reindex(['vr', 'r', 'mr', 'mf', 'f', 'vf'])
 
-    # Pie chart
+    # Pie chart with larger labels
     colors = DEFAULT_COLORS
     wedges, texts, autotexts = ax2.pie(freq_percentages,
                                       labels=[f'{l} {v:.1f}%' for l, v in zip(freq_percentages.index, freq_percentages)],
                                       colors=colors,
-                                      autopct='%1.1f%%')
-    ax2.set_title('Frequency Class Distribution')
+                                      autopct='%1.1f%%',
+                                      textprops={'fontsize': 16})  # 2x larger text
+    # Make percentage labels inside the pie larger
+    for autotext in autotexts:
+        autotext.set_fontsize(16)
+        autotext.set_weight('bold')
+    ax2.set_title('Frequency Class Distribution', fontsize=18)
 
-    # Update legend
+    # Update legend with larger font
     legend_labels = [
         'very rare (vr): 1 MTB/64 grid square',
         'rare (r): 2-3 MTB/64 grid squares',
@@ -318,7 +330,7 @@ def plot_frequency_distribution(data):
         'very frequent (vf): >31 MTB/64 grid squares'
     ]
     ax2.legend(wedges, legend_labels,
-               loc='center left', bbox_to_anchor=(1, 0.5))
+               loc='center left', bbox_to_anchor=(1, 0.5), fontsize=14)  # Larger legend text
 
     # Update note
     # note = ("**Note:** These plots show the geographical distribution of lichen species:\n\n"
@@ -334,8 +346,6 @@ def plot_frequency_distribution(data):
     #          bbox=dict(facecolor='white', alpha=0.8),
     #          transform=fig.transFigure)
 
-    plt.tight_layout()
-    plt.subplots_adjust(bottom=0.2)
     return fig
 
 def plot_substrate_distribution(data):
@@ -357,13 +367,14 @@ def plot_substrate_distribution(data):
 
     # Customize the plot
     ax.set_xticks(range(len(substrate_counts)))
-    ax.set_xticklabels(substrate_counts.index, rotation=0)
-    ax.set_ylabel('Number of Observations')
-    ax.set_title('Distribution of Lichen Observations Across Substrate Types')
+    ax.set_xticklabels(substrate_counts.index, rotation=0, fontsize=16)
+    ax.set_ylabel('Number of Observations', fontsize=18)
+    ax.set_title('Distribution of Lichen Observations Across Substrate Types', fontsize=20)
+    ax.tick_params(axis='y', labelsize=16)
 
     # Add value labels on top of each bar
     for i, v in enumerate(substrate_counts.values):
-        ax.text(i, v + (max(substrate_counts.values) * 0.02), str(int(v)), ha='center')
+        ax.text(i, v + (max(substrate_counts.values) * 0.02), str(int(v)), ha='center', fontsize=16)
 
     # Dynamic legend: only abbreviations present in the plotted data per category
     formatted_legend = []
@@ -411,13 +422,14 @@ def plot_species_per_substrate(data):
 
     # Customize the plot
     ax.set_xticks(range(len(species_counts)))
-    ax.set_xticklabels(species_counts.index, rotation=0)
-    ax.set_ylabel('Number of Species')
-    ax.set_title('Number of Unique Species on Different Substrate Types')
+    ax.set_xticklabels(species_counts.index, rotation=0, fontsize=16)
+    ax.set_ylabel('Number of Species', fontsize=18)
+    ax.set_title('Number of Unique Species on Different Substrate Types', fontsize=20)
+    ax.tick_params(axis='y', labelsize=16)
 
     # Add value labels on top of each bar
     for i, v in enumerate(species_counts.values):
-        ax.text(i, v + 5, str(int(v)), ha='center')
+        ax.text(i, v + 5, str(int(v)), ha='center', fontsize=16)
 
     # Dynamic legend: only abbreviations present in the plotted data per category
     formatted_legend = []
@@ -472,7 +484,7 @@ def plot_top_substrates(data, substrats):
 
     # Add species count as text
     for i, (obs, species) in enumerate(zip(top_substrates['AMOUNT'], top_substrates['SPECIES'])):
-        ax.text(obs + obs * 0.02, i, f'  {int(obs):,}  ({species} species)', va='center')
+        ax.text(obs + obs * 0.02, i, f'  {int(obs):,}  ({species} species)', va='center', fontsize=14)
 
     # Customize the plot
     ax.set_yticks(y_pos)
@@ -485,9 +497,10 @@ def plot_top_substrates(data, substrats):
                 return str(code)
         except Exception:
             return str(code)
-    ax.set_yticklabels([get_full_name(code) for code in top_substrates.index])
-    ax.set_xlabel('Number of Observations')
-    ax.set_title('Top 25 Substrates by Number of Observations')
+    ax.set_yticklabels([get_full_name(code) for code in top_substrates.index], fontsize=14)
+    ax.set_xlabel('Number of Observations', fontsize=18)
+    ax.set_title('Top 25 Substrates by Number of Observations', fontsize=20)
+    ax.tick_params(axis='x', labelsize=14)
 
     plt.tight_layout()
     return plt.gcf()
@@ -558,12 +571,13 @@ def plot_wood_distribution(data, substrats):
     # Plot wood substrates
     bars = ax.barh(range(len(wood_counts)), wood_counts.values, color=CATEGORY_COLORS.get('Wood', PALETTE['not_threatened']), edgecolor='white')
     ax.set_yticks(range(len(wood_counts)))
-    ax.set_yticklabels([create_label(code) for code in wood_counts.index], fontsize=8)
+    ax.set_yticklabels([create_label(code) for code in wood_counts.index], fontsize=14)
     for i, bar in enumerate(bars):
         width = bar.get_width()
-        ax.text(width, i, f' {int(width)}', va='center')
-    ax.set_xlabel('Number of Observations')
-    ax.set_title('Distribution of Observations on Wood Substrates')
+        ax.text(width, i, f' {int(width)}', va='center', fontsize=14)
+    ax.set_xlabel('Number of Observations', fontsize=18)
+    ax.set_title('Distribution of Observations on Wood Substrates', fontsize=20)
+    ax.tick_params(axis='x', labelsize=14)
 
     # Add explanatory note
     # note = ("Note: This plot shows the distribution of lichen observations on wood substrates including dead wood,\n"
@@ -593,6 +607,16 @@ def plot_temporal_trends(data):
     """
     # Create figure with subplots
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12))
+    
+    # Set larger font sizes for all text elements
+    plt.rcParams.update({
+        'font.size': 18,
+        'axes.titlesize': 24,
+        'axes.labelsize': 22,
+        'xtick.labelsize': 20,
+        'ytick.labelsize': 20,
+        'legend.fontsize': 16
+    })
 
     # Get yearly totals and species counts, excluding the last year
     yearly_data = data.groupby([data['DATE'].dt.year]).agg({
@@ -606,13 +630,13 @@ def plot_temporal_trends(data):
 
     # Plot 1: Absolute numbers
     ax1.plot(yearly_data['DATE'], yearly_data['AMOUNT'],
-             marker='o', label='Total observations', color=PALETTE['disappeared'])
+             marker='o', label='Total observations', color=PALETTE['disappeared'], markersize=8, linewidth=2)
     ax1.set_ylabel('Number of observations', color=PALETTE['disappeared'])
 
     # Add second y-axis for species counts
     ax1_twin = ax1.twinx()
     ax1_twin.plot(yearly_data['DATE'], yearly_data['SPECIES'],
-                  marker='s', label='Unique species', color=PALETTE['threatened'])
+                  marker='s', label='Unique species', color=PALETTE['threatened'], markersize=8, linewidth=2)
     ax1_twin.set_ylabel('Number of unique species', color=PALETTE['threatened'])
 
     # Add legend
@@ -683,7 +707,7 @@ def plot_temporal_trends(data):
         abbreviated_name = abbreviate_species_name(species)
         print(f"Species: {species} -> Abbreviated: {abbreviated_name}")  # Debug print
         ax2.plot(relative_freq.index, relative_freq[species],
-                 label=abbreviated_name, marker='o', alpha=0.7)
+                 label=abbreviated_name, marker='o', alpha=0.7, markersize=8, linewidth=2)
 
     ax2.set_xlabel('Year Period (5-year intervals)')
     ax2.set_ylabel('Relative Frequency')
@@ -691,7 +715,7 @@ def plot_temporal_trends(data):
 
     # Create legend with abbreviated names
     # Force legend to update with new labels
-    ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9)
+    ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
 
     # Debug: print what's actually in the legend
     handles, labels = ax2.get_legend_handles_labels()
