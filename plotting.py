@@ -612,7 +612,7 @@ def plot_temporal_trends(data):
     plt.rcParams.update({
         'font.size': 18,
         'axes.titlesize': 24,
-        'axes.labelsize': 22,
+        'axes.labelsize': 18,
         'xtick.labelsize': 20,
         'ytick.labelsize': 20,
         'legend.fontsize': 16
@@ -631,13 +631,16 @@ def plot_temporal_trends(data):
     # Plot 1: Absolute numbers
     ax1.plot(yearly_data['DATE'], yearly_data['AMOUNT'],
              marker='o', label='Total observations', color=PALETTE['disappeared'], markersize=8, linewidth=2)
-    ax1.set_ylabel('Number of observations', color=PALETTE['disappeared'])
+    ax1.set_ylabel('Number of observations', fontsize=20, color=PALETTE['disappeared'])
+    ax1.tick_params(axis='y', labelsize=20, colors=PALETTE['disappeared'])
+    ax1.tick_params(axis='x', labelsize=20)  # Jaartallen groter
 
     # Add second y-axis for species counts
     ax1_twin = ax1.twinx()
     ax1_twin.plot(yearly_data['DATE'], yearly_data['SPECIES'],
                   marker='s', label='Unique species', color=PALETTE['threatened'], markersize=8, linewidth=2)
-    ax1_twin.set_ylabel('Number of unique species', color=PALETTE['threatened'])
+    ax1_twin.set_ylabel('Number of unique species', fontsize=20, color=PALETTE['threatened'])
+    ax1_twin.tick_params(axis='y', labelsize=20, colors=PALETTE['threatened'])
 
     # Add legend
     lines1, labels1 = ax1.get_legend_handles_labels()
@@ -709,9 +712,10 @@ def plot_temporal_trends(data):
         ax2.plot(relative_freq.index, relative_freq[species],
                  label=abbreviated_name, marker='o', alpha=0.7, markersize=8, linewidth=2)
 
-    ax2.set_xlabel('Year Period (5-year intervals)')
-    ax2.set_ylabel('Relative Frequency')
+    ax2.set_xlabel('Year Period (5-year intervals)', fontsize=20)
+    ax2.set_ylabel('Relative Frequency', fontsize=20)
     ax2.set_title('Relative Frequencies of Top 10 Species Over Time (5-Year Aggregation)')
+    ax2.tick_params(axis='both', labelsize=20)  # X en Y labels groter
 
     # Create legend with abbreviated names
     # Force legend to update with new labels
